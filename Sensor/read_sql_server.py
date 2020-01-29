@@ -4,6 +4,13 @@ import numpy as np
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 
+# Korean font
+import matplotlib.font_manager as fm
+from sklearn.preprocessing import MinMaxScaler
+path = '/Library/Fonts/Arial Unicode.ttf'
+fontprop = fm.FontProperties(fname=path, size=10)
+
+
 mysql = pymysql.connect(
     host='104.199.189.13',
     user='root',
@@ -105,7 +112,7 @@ class sensor_data_analysis:
         target_df.drop(columns=['contents'], inplace=True)
         target_df = target_df[['id', 'phone', 'devType', 'macAddr', 'eventType'] + converted_columns +                         ['commState', 'powerState', 'batState', 'regDate', 'createdAt', 'updatedAt']]
         if self.eventType == 8:
-            target_df.contentsRoom = target_df.contentsRoom.astype('category').cat.codes
+            target_df.contentsRoom = target_df.contentsRoom.astype('category')
        
         return target_df
 
@@ -149,6 +156,9 @@ class sensor_data_analysis:
 
 
     def plotContent(self, analysis_content_list, period, std=True, normalize=True):
+        if 'contentsRoom' in analysis_content_list:
+            raise ValueError("Use `plotRoom` to plot room status")
+
         plt.figure(figsize=(16,8))
         for analysis_content in analysis_content_list:
             mean_content_time_data, std_content_time_data = self.getPeriodicResult(analysis_content, period, normalize)
@@ -164,3 +174,21 @@ class sensor_data_analysis:
         plt.xlabel("Hour")
         plt.ylabel("Normalized Activity")
         plt.legend()
+
+
+
+    def plotRoom(self):
+        self.target_df['hour'] = self.target_df.regDate.dt.floor('12H')
+        self.target_df['hour'] = self.target_df['hour'].map(lambda x: x.hour)
+        self.target_df['weekday'] = self.target_df.regDate.dt.weekday
+        data_of_interest = self.target_df.groupby(['hour', 'weekday', 'contentsRoom']).count()['id'].values.reshape(-1, 4)
+        scaler = MinMaxScaler()
+        scaler.fit(data_of_interest.T)
+
+        plt.figure(figsize=(20,8))
+        plt.imshow(scaler.transform(data_of_interest.T))
+        plt.colorbar()
+        plt.yticks([0, 1, 2, 3], self.target_df.contentsRoom.dtypes.categories, fontproperties=fontprop)
+        plt.ylim(-.5, 3.5)
+        plt.xticks([2*i+.5 for i in range(7)], ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+        plt.ylabel("Location")
