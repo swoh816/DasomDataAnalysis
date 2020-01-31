@@ -181,7 +181,7 @@ class sensor_data_analysis:
         self.target_df['hour'] = self.target_df.regDate.dt.floor('12H')
         self.target_df['hour'] = self.target_df['hour'].map(lambda x: x.hour)
         self.target_df['weekday'] = self.target_df.regDate.dt.weekday
-        data_of_interest = self.target_df.groupby(['hour', 'weekday', 'contentsRoom']).count()['id'].values.reshape(-1, 4)
+        data_of_interest = self.target_df.groupby(['hour', 'weekday', 'contentsRoom']).mean()['contentsCurrAct'].values.reshape(-1, 4)
         scaler = MinMaxScaler()
         scaler.fit(data_of_interest.T)
 
