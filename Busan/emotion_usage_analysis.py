@@ -57,14 +57,12 @@ class investigate_emotion:
 
         
         
-    def userEmotionScore(self, user, legend=False):
+    def userEmotionScore(self, user, period='24H', legend=False):
         # self.region: Gimpo, busanjin, B2C
         user_specific_data = self.region_emotion_df[self.region_emotion_df.PUDDING_SERIALNUM == user]
-        user_specific_data['date'] = user_specific_data.REGISTRATION_DATE.map(lambda x: x.date())
-        mean_data = user_specific_data.groupby('date').mean()
-        std_data = user_specific_data.groupby('date').std()
-        mean_data = mean_data[mean_data.index>datetime.datetime(2019, 12, 1).date()]
-        std_data = std_data[std_data.index>datetime.datetime(2019, 12, 1).date()]
+        user_specific_data[period] = user_specific_data.REGISTRATION_DATE.dt.floor(period)
+        mean_data = user_specific_data.groupby(period).mean()
+        std_data = user_specific_data.groupby(period).std()
         plt.plot(mean_data.index, mean_data.emotionScore, 'o-', label=user)
         plt.fill_between(mean_data.index, mean_data.emotionScore-std_data.emotionScore,
                          mean_data.emotionScore+std_data.emotionScore, alpha=0.3)
@@ -74,14 +72,12 @@ class investigate_emotion:
             
         
 
-    def totalEmotionScore(self, legend=False):
+    def totalEmotionScore(self, period='24H', legend=False):
         # self.region: Gimpo, busanjin, B2C
         total_data = self.region_emotion_df
-        total_data['date'] = total_data.REGISTRATION_DATE.map(lambda x: x.date())
-        mean_data = total_data.groupby('date').mean()
-        std_data = total_data.groupby('date').std()
-        mean_data = mean_data[mean_data.index>datetime.datetime(2019, 12, 1).date()]
-        std_data = std_data[std_data.index>datetime.datetime(2019, 12, 1).date()]
+        total_data[period] = total_data.REGISTRATION_DATE.dt.floor(period)
+        mean_data = total_data.groupby(period).mean()
+        std_data = total_data.groupby(period).std()
         plt.plot(mean_data.index, mean_data.emotionScore, 'o-')
         plt.fill_between(mean_data.index, mean_data.emotionScore-std_data.emotionScore,
                          mean_data.emotionScore+std_data.emotionScore, alpha=0.3)
@@ -97,7 +93,6 @@ class investigate_emotion:
         user_specific_data = self.region_emotion_df[self.region_emotion_df.PUDDING_SERIALNUM == user]
         user_specific_data['date'] = user_specific_data.REGISTRATION_DATE.map(lambda x: x.date())
         count_per_date = user_specific_data.groupby('date').count()['REGISTRATION_DATE']
-        count_per_date = count_per_date[count_per_date.index>datetime.datetime(2019, 12, 1).date()]
         
         plt.bar(count_per_date.index, count_per_date, alpha=alpha)
         plt.xticks([count_per_date.index[0], count_per_date.index[-1]])
@@ -110,13 +105,11 @@ class investigate_emotion:
         total_data['date'] = total_data.REGISTRATION_DATE.map(lambda x: x.date())
 
         count_per_date = total_data.groupby('date').count()['REGISTRATION_DATE']
-        count_per_date = count_per_date[count_per_date.index>datetime.datetime(2019, 12, 1).date()]
 
         if normalize_by_people:
             accumulate_count_df = pd.DataFrame(columns=['date', 'PUDDING_SERIALNUM'],
                                data=[list(i) for i in total_data.groupby(['date', 'PUDDING_SERIALNUM']).count().index.values])
             accumulate_count_df.set_index('date', inplace=True)
-            accumulate_count_df = accumulate_count_df[accumulate_count_df.index > datetime.date(2019, 12, 1)]
 
             all_users = []
             prev_date = accumulate_count_df.index[0]
