@@ -186,7 +186,7 @@ class sensor_data_analysis:
         scaler.fit(data_of_interest.T)
 
         plt.figure(figsize=(20,8))
-        plt.imshow(scaler.transform(data_of_interest.T))
+        plt.imshow(scaler.transform(data_of_interest.T), cmap=plt.get_cmap('Reds'))
         plt.colorbar()
         plt.yticks([0, 1, 2, 3], self.target_df.contentsRoom.dtypes.categories, fontproperties=fontprop)
         plt.ylim(-.5, 3.5)
